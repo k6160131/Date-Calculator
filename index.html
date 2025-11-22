@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>日期计算器</title>
+    <style>
+        :root {
+            --bg-color: #F2F2F7;
+            --card-bg: #FFFFFF;
+            --primary-color: #007AFF;
+            --text-primary: #1C1C1E;
+            --text-secondary: #8E8E93;
+            --border-color: #E5E5EA;
+            --input-bg: #F2F2F7;
+            --radius: 16px;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 440px;
+            margin-top: 20px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            text-align: center;
+            letter-spacing: -0.5px;
+        }
+
+        /* Segmented Control (Tabs) */
+        .tabs {
+            background-color: rgba(118, 118, 128, 0.12);
+            padding: 2px;
+            border-radius: 9px;
+            display: flex;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .tab-btn {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 7px;
+            cursor: pointer;
+            z-index: 2;
+            transition: all 0.2s ease;
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            background: #FFFFFF;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+        }
+
+        /* Content Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .card.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        input[type="date"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            background-color: var(--input-bg);
+            font-size: 17px;
+            color: var(--text-primary);
+            font-family: inherit;
+            transition: all 0.2s;
+            appearance: none;
+        }
+
+        input:focus {
+            background-color: #fff;
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        /* Direction Selector (Radio-like) */
+        .direction-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .direction-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: white;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-primary);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .direction-btn.selected {
+            background-color: rgba(0, 122, 255, 0.1);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        /* Action Button */
+        .action-btn {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .action-btn:active {
+            opacity: 0.7;
+        }
+
+        /* Result Area */
+        .result-area {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .result-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .result-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .result-value small {
+            font-size: 16px;
+            font-weight: 400;
+            color: var(--text-secondary);
+            margin-left: 4px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>日期助手</h1>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('calc')">推算日期</button>
+        <button class="tab-btn" onclick="switchTab('diff')">计算间隔</button>
+    </div>
+
+    <!-- Card 1: Calculate Date -->
+    <div id="tab-calc" class="card active">
+        <div class="form-group">
+            <label>开始日期</label>
+            <input type="date" id="calc-start-date">
+        </div>
+
+        <div class="form-group">
+            <label>天数</label>
+            <input type="number" id="calc-days" placeholder="例如：30" min="0" inputmode="numeric">
+        </div>
+
+        <div class="direction-group">
+            <div class="direction-btn" id="btn-before" onclick="setDirection(-1)">往前推算</div>
+            <div class="direction-btn selected" id="btn-after" onclick="setDirection(1)">往后推算</div>
+        </div>
+
+        <button class="action-btn" onclick="calculateDate()">计算日期</button>
+
+        <div class="result-area hidden" id="calc-result-box">
+            <div class="result-label">计算结果</div>
+            <div class="result-value" id="calc-result-text">--</div>
+        </div>
+    </div>
+
+    <!-- Card 2: Date Difference -->
+    <div id="tab-diff" class="card">
+        <div class="form-group">
+            <label>开始日期</label>
+            <input type="date" id="diff-start-date">
+        </div>
+
+        <div class="form-group">
+            <label>结束日期</label>
+            <input type="date" id="diff-end-date">
+        </div>
+
+        <button class="action-btn" onclick="calculateDiff()">计算间隔</button>
+
+        <div class="result-area hidden" id="diff-result-box">
+            <div class="result-label">相隔天数</div>
+            <div class="result-value" id="diff-result-text">--</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // State
+    let calcDirection = 1; // 1 for after, -1 for before
+
+    // Initialize dates to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('calc-start-date').value = today;
+    document.getElementById('diff-start-date').value = today;
+    document.getElementById('diff-end-date').value = today;
+
+    // Tab Switching
+    function switchTab(tabName) {
+        // Hide all cards
+        document.querySelectorAll('.card').forEach(el => el.classList.remove('active'));
+        // Deselect all tabs
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        
+        // Show target
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+        // Highlight tab btn (This is a simple way, assuming order matches)
+        const index = tabName === 'calc' ? 0 : 1;
+        document.querySelectorAll('.tab-btn')[index].classList.add('active');
+    }
+
+    // Direction Logic
+    function setDirection(dir) {
+        calcDirection = dir;
+        const btnBefore = document.getElementById('btn-before');
+        const btnAfter = document.getElementById('btn-after');
+        
+        if (dir === 1) {
+            btnAfter.classList.add('selected');
+            btnBefore.classList.remove('selected');
+        } else {
+            btnBefore.classList.add('selected');
+            btnAfter.classList.remove('selected');
+        }
+    }
+
+    // Format Date Utility (YYYY-MM-DD + Weekday)
+    function formatDate(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        const weekArr = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+        const week = weekArr[date.getDay()];
+        return `${y}-${m}-${d} <small>${week}</small>`;
+    }
+
+    // Feature 1: Calculate Date
+    function calculateDate() {
+        const startVal = document.getElementById('calc-start-date').value;
+        const daysVal = parseInt(document.getElementById('calc-days').value);
+
+        if (!startVal || isNaN(daysVal)) {
+            alert('请输入有效的日期和天数');
+            return;
+        }
+
+        // Handle timezone issues by treating input as YYYY-MM-DD
+        // Using new Date(string) acts as UTC for YYYY-MM-DD, preventing offset errors
+        const startDate = new Date(startVal);
+        
+        const resultDate = new Date(startDate);
+        resultDate.setDate(startDate.getDate() + (daysVal * calcDirection));
+
+        // Handle display logic manually to avoid TZ shifts when printing
+        // We just want the calendar date value
+        // The easiest way with date objects created from "YYYY-MM-DD" is to use getUTCDate methods
+        // But to use my utility format function which uses local time, let's correct the object:
+        // Add timezone offset minutes to get back to "local representation" of that specific date
+        const userTimezoneOffset = resultDate.getTimezoneOffset() * 60000;
+        const correctedDate = new Date(resultDate.getTime() + userTimezoneOffset);
+
+        document.getElementById('calc-result-text').innerHTML = formatDate(correctedDate);
+        document.getElementById('calc-result-box').classList.remove('hidden');
+    }
+
+    // Feature 2: Calculate Difference
+    function calculateDiff() {
+        const startVal = document.getElementById('diff-start-date').value;
+        const endVal = document.getElementById('diff-end-date').value;
+
+        if (!startVal || !endVal) {
+            alert('请选择开始和结束日期');
+            return;
+        }
+
+        const date1 = new Date(startVal);
+        const date2 = new Date(endVal);
+
+        // Time diff in milliseconds
+        const timeDiff = date2 - date1;
+        // Convert to days (1000*60*60*24)
+        const dayDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+        const absDiff = Math.abs(dayDiff);
+        
+        document.getElementById('diff-result-text').innerHTML = `${absDiff} <small>天</small>`;
+        document.getElementById('diff-result-box').classList.remove('hidden');
+    }
+</script>
+
+</body>
+</html>
